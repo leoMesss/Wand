@@ -7,6 +7,7 @@ interface MenuBarProps {
   onSave: () => void;
   onSaveAs: () => void;
   onCloseEditor: () => void;
+  onShowTools: () => void;
 }
 
 const MenuBar: React.FC<MenuBarProps> = ({
@@ -14,7 +15,8 @@ const MenuBar: React.FC<MenuBarProps> = ({
   onOpenFolder,
   onSave,
   onSaveAs,
-  onCloseEditor
+  onCloseEditor,
+  onShowTools
 }) => {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -54,12 +56,13 @@ const MenuBar: React.FC<MenuBarProps> = ({
     { id: 'view', label: '查看' },
     { id: 'go', label: '转到' },
     { id: 'run', label: '运行' },
+    { id: 'tools', label: '工具' },
     { id: 'terminal', label: '终端' },
     { id: 'help', label: '帮助' },
   ];
 
-  const visibleMenus = allMenus.slice(0, 3);
-  const hiddenMenus = allMenus.slice(3);
+  const visibleMenus = allMenus;
+  const hiddenMenus = [];
 
   const renderMenuContent = (menuId: string) => {
     if (menuId === 'file') {
@@ -74,6 +77,13 @@ const MenuBar: React.FC<MenuBarProps> = ({
           <MenuItem label="关闭编辑器" shortcut="Ctrl+F4" onClick={() => handleAction(onCloseEditor)} />
           <MenuSeparator />
           <MenuItem label="退出" shortcut="Alt+F4" onClick={() => window.close()} />
+        </>
+      );
+    }
+    if (menuId === 'tools') {
+      return (
+        <>
+          <MenuItem label="查看所有工具" onClick={() => handleAction(onShowTools)} />
         </>
       );
     }

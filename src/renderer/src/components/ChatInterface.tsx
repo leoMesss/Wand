@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
-import { Send, Paperclip, Mic, Bot, User, Settings, X, Sparkles, RefreshCw, ChevronDown, Check, RotateCcw, Square } from 'lucide-react';
+import { Send, Paperclip, Mic, Bot, User, Settings, X, Sparkles, RefreshCw, ChevronDown, ChevronRight, Check, RotateCcw, Square, Terminal, Code2, Plus } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -136,6 +136,132 @@ interface AttachedFile {
   name: string;
   size?: number;
 }
+
+const ToolCallBlock = ({ content }: { content: string }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const funcMatch = /✿FUNCTION✿:\s*(.+)/.exec(content);
+  const argsMatch = /✿ARGS✿:\s*(.+)/s.exec(content);
+  
+  const funcName = funcMatch ? funcMatch[1].trim() : 'Unknown Tool';
+  let args = {};
+  try {
+    if (argsMatch) {
+      args = JSON.parse(argsMatch[1].trim());
+    }
+  } catch (e) {
+    args = { error: 'Invalid JSON args' };
+  }
+
+  return (
+    <div className="my-2 border border-blue-500/30 bg-blue-500/10 rounded-md overflow-hidden">
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full bg-blue-500/20 px-3 py-2 flex items-center gap-2 text-blue-300 text-xs font-mono border-b border-blue-500/20 hover:bg-blue-500/30 transition-colors text-left"
+      >
+        {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+        <Terminal size={14} />
+        <span>Tool Call: {funcName}</span>
+      </button>
+      {isOpen && (
+        <div className="p-3 text-xs font-mono text-gray-300 overflow-x-auto">
+          <pre>{JSON.stringify(args, null, 2)}</pre>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const ToolResultBlock = ({ content }: { content: string }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <div className="my-2 border border-green-500/30 bg-green-500/10 rounded-md overflow-hidden">
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full bg-green-500/20 px-3 py-2 flex items-center gap-2 text-green-300 text-xs font-mono border-b border-green-500/20 hover:bg-green-500/30 transition-colors text-left"
+      >
+        {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+        <Check size={14} />
+        <span>Tool Result</span>
+      </button>
+      {isOpen && (
+        <div className="p-3 text-xs font-mono text-gray-300 overflow-x-auto max-h-60">
+          <pre>{content.trim()}</pre>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const ThinkingBlock = ({ content }: { content: string }) => {
+  const [isOpen, setIsOpen] = useState(true);
+  return (
+    <div className="my-2 border border-gray-700 rounded-md overflow-hidden">
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full bg-[#2b2b2b] px-3 py-2 flex items-center gap-2 text-gray-400 text-xs hover:bg-[#3e3e3e] transition-colors"
+      >
+        {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+        <span>Thinking Process</span>
+      </button>
+      {isOpen && (
+        <div className="p-3 text-gray-400 text-sm bg-[#1e1e1e] border-t border-gray-700 italic">
+          <ReactMarkdown>{content}</ReactMarkdown>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const MessageContent = ({ content }: { content: string }) => {
+  // Split content by tags
+  const parts = content.split(/(<thinking>[\s\S]*?<\/thinking>|<tool>[\s\S]*?<\/tool>|<tool_result>[\s\S]*?<\/tool_result>)/g);
+
+  return (
+    <div className="space-y-2">
+      {parts.map((part, index) => {
+        if (part.startsWith('<thinking>')) {
+          const inner = part.replace(/<\/?thinking>/g, '');
+          return <ThinkingBlock key={index} content={inner} />;
+        }
+        if (part.startsWith('<tool>')) {
+          const inner = part.replace(/<\/?tool>/g, '');
+          return <ToolCallBlock key={index} content={inner} />;
+        }
+        if (part.startsWith('<tool_result>')) {
+          const inner = part.replace(/<\/?tool_result>/g, '');
+          return <ToolResultBlock key={index} content={inner} />;
+        }
+        if (!part.trim()) return null;
+        
+        return (
+          <ReactMarkdown 
+            key={index}
+            remarkPlugins={[remarkGfm]} 
+            rehypePlugins={[rehypeRaw]}
+            components={{
+              code({node, inline, className, children, ...props}: any) {
+                const match = /language-(\w+)/.exec(className || '')
+                return !inline && match ? (
+                  <div className="relative group">
+                    <code className={className} {...props}>
+                      {children}
+                    </code>
+                  </div>
+                ) : (
+                  <code className={`${className} bg-white/10 rounded px-1 py-0.5`} {...props}>
+                    {children}
+                  </code>
+                )
+              }
+            }}
+          >
+            {part}
+          </ReactMarkdown>
+        );
+      })}
+    </div>
+  );
+};
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({ workspacePath }) => {
   const [input, setInput] = useState('');
@@ -344,6 +470,21 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ workspacePath }) => {
     setIsLoading(false);
   };
 
+  const handleNewChat = () => {
+    setMessages([
+      {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: 'Hello! I am Wand, your all-purpose AI assistant. How can I help you today?',
+        timestamp: Date.now()
+      }
+    ]);
+    setInput('');
+    setAttachedFiles([]);
+    setIsLoading(false);
+    window.api.chatStop(); // Stop any ongoing generation
+  };
+
   const handleSend = async () => {
     if (!input.trim() && attachedFiles.length === 0) return;
 
@@ -382,8 +523,15 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ workspacePath }) => {
         workspacePath,
         files: currentAttachedFiles.map(f => f.path) // Pass attached files
       };
+      
+      // Prepare history: exclude the current new message (it's sent as 'message') and the placeholder
+      // Actually, let's send the full history including the new message, but handle it in backend.
+      // Or better: send previous messages as history, and current input as message.
+      const history = messages.map(m => ({ role: m.role, content: m.content }));
+      
       window.api.chatStream(
         input, 
+        history,
         config,
         (chunk: string) => {
           setMessages(prev => prev.map(msg => 
@@ -484,13 +632,22 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ workspacePath }) => {
       {/* Header */}
       <div className="p-4 border-b border-[#2b2b2b] flex justify-between items-center bg-[#252526]">
         <span className="font-medium text-sm text-white">Wand Assistant</span>
-        <button 
-          onClick={() => setShowSettings(true)}
-          className="p-1.5 hover:bg-white/10 rounded-md text-gray-400 hover:text-white transition-colors"
-          title="AI Settings"
-        >
-          <Settings size={16} />
-        </button>
+        <div className="flex items-center gap-1">
+          <button 
+            onClick={handleNewChat}
+            className="p-1.5 hover:bg-white/10 rounded-md text-gray-400 hover:text-white transition-colors"
+            title="New Chat"
+          >
+            <Plus size={16} />
+          </button>
+          <button 
+            onClick={() => setShowSettings(true)}
+            className="p-1.5 hover:bg-white/10 rounded-md text-gray-400 hover:text-white transition-colors"
+            title="AI Settings"
+          >
+            <Settings size={16} />
+          </button>
+        </div>
       </div>
 
       {/* Settings Modal */}
@@ -664,28 +821,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ workspacePath }) => {
                   : 'bg-primary text-white'
               }`}>
                 {msg.role === 'assistant' ? (
-                  <ReactMarkdown 
-                    remarkPlugins={[remarkGfm]} 
-                    rehypePlugins={[rehypeRaw]}
-                    components={{
-                      code({node, inline, className, children, ...props}: any) {
-                        const match = /language-(\w+)/.exec(className || '')
-                        return !inline && match ? (
-                          <div className="relative group">
-                            <code className={className} {...props}>
-                              {children}
-                            </code>
-                          </div>
-                        ) : (
-                          <code className={`${className} bg-white/10 rounded px-1 py-0.5`} {...props}>
-                            {children}
-                          </code>
-                        )
-                      }
-                    }}
-                  >
-                    {msg.content}
-                  </ReactMarkdown>
+                  <MessageContent content={msg.content} />
                 ) : (
                   msg.content
                 )}

@@ -163,15 +163,21 @@ const FileExplorer: React.FC<FileExplorerProps> = ({ projectPath, onFileSelect }
   const [isTimelineExpanded, setIsTimelineExpanded] = useState(false);
   const projectName = projectPath.split(/[\\/]/).pop()?.toUpperCase();
 
+  const loadRoot = async () => {
+    if (projectPath) {
+      const files = await window.api.readDirectory(projectPath);
+      setRootFiles(files);
+    }
+  };
+
   useEffect(() => {
-    const loadRoot = async () => {
-      if (projectPath) {
-        const files = await window.api.readDirectory(projectPath);
-        setRootFiles(files);
-      }
-    };
     loadRoot();
   }, [projectPath]);
+
+  const handleRefresh = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    loadRoot();
+  };
 
   return (
     <div className="h-full flex flex-col bg-[#252526] text-[#cccccc]">
@@ -204,7 +210,11 @@ const FileExplorer: React.FC<FileExplorerProps> = ({ projectPath, onFileSelect }
             <button className="p-1 hover:bg-[#3c3c3c] rounded" title="New Folder">
               <FolderPlus size={14} />
             </button>
-            <button className="p-1 hover:bg-[#3c3c3c] rounded" title="Refresh">
+            <button 
+              className="p-1 hover:bg-[#3c3c3c] rounded" 
+              title="Refresh"
+              onClick={handleRefresh}
+            >
               <RefreshCw size={14} />
             </button>
             <button className="p-1 hover:bg-[#3c3c3c] rounded" title="Collapse All">

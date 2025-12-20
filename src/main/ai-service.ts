@@ -11,8 +11,8 @@ export class AIService {
   }
 
   private setupHandlers() {
-    ipcMain.on('ai:chat-stream', (event, { message, config }) => {
-      this.processMessageStream(event, message, config);
+    ipcMain.on('ai:chat-stream', (event, { message, history, config }) => {
+      this.processMessageStream(event, message, history, config);
     });
 
     ipcMain.on('ai:chat-stop', (event) => {
@@ -25,6 +25,50 @@ export class AIService {
 
     ipcMain.handle('ai:fetch-models', async (event, config) => {
       return this.fetchModels(config);
+    });
+
+    ipcMain.handle('ai:get-tools', async (event, config) => {
+      return this.getTools(config);
+    });
+  }
+
+  private getTools(config: any): Promise<any> {
+    return new Promise((resolve, reject) => {
+      console.log('Fetching tools via Python CLI');
+      const scriptPath = path.join(process.cwd(), 'src', 'backend', 'cli.py');
+      const pythonProcess = spawn('python', [scriptPath]);
+
+      const inputData = JSON.stringify({ type: 'get_tools', config });
+      pythonProcess.stdin.write(inputData);
+      pythonProcess.stdin.end();
+
+      let outputData = '';
+      let errorData = '';
+
+      pythonProcess.stdout.on('data', (data) => {
+        outputData += data.toString();
+      });
+
+      pythonProcess.stderr.on('data', (data) => {
+        errorData += data.toString();
+      });
+
+      pythonProcess.on('close', (code) => {
+        if (code !== 0) {
+          reject(new Error(`Python script exited with code ${code}: ${errorData}`));
+          return;
+        }
+        try {
+          const result = JSON.parse(outputData);
+          if (result.error) {
+            reject(new Error(result.error));
+          } else {
+            resolve(result.tools);
+          }
+        } catch (e) {
+          reject(new Error(`Failed to parse Python output: ${outputData}`));
+        }
+      });
     });
   }
 
@@ -68,7 +112,7 @@ export class AIService {
     });
   }
 
-  private processMessageStream(event: Electron.IpcMainEvent, message: string, config: any) {
+  private processMessageStream(event: Electron.IpcMainEvent, message: string, history: any[], config: any) {
     console.log('Processing AI request via Python CLI (Stream):', message);
     
     // Kill any existing process
@@ -82,7 +126,7 @@ export class AIService {
     this.currentProcess = pythonProcess;
 
     // Send data to Python script via stdin
-    const inputData = JSON.stringify({ message, config });
+    const inputData = JSON.stringify({ message, history, config });
     pythonProcess.stdin.write(inputData);
     pythonProcess.stdin.end();
 

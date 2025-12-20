@@ -17,6 +17,7 @@ import WorkspaceView from './components/WorkspaceView';
 import FileExplorer from './components/FileExplorer';
 import { EditorTabs, EditorFile } from './components/EditorTabs';
 import MenuBar from './components/MenuBar';
+import ToolsModal from './components/ToolsModal';
 
 const PdfViewer = ({ content }: { content: string }) => {
   const [numPages, setNumPages] = useState<number>(0);
@@ -63,6 +64,7 @@ function App() {
   const [openFiles, setOpenFiles] = useState<EditorFile[]>([]);
   const [activeFilePath, setActiveFilePath] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'preview' | 'source'>('preview');
+  const [showTools, setShowTools] = useState(false);
   
   // Resizable panels state
   const [leftWidth, setLeftWidth] = useState(256);
@@ -283,7 +285,9 @@ function App() {
         onSave={handleSave}
         onSaveAs={handleSaveAs}
         onCloseEditor={handleCloseEditor}
+        onShowTools={() => setShowTools(true)}
       />
+      {showTools && <ToolsModal onClose={() => setShowTools(false)} />}
       <div className="flex-1 flex overflow-hidden">
         {/* Left Sidebar - Navigation */}
         <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />

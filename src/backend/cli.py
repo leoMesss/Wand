@@ -2,13 +2,20 @@ import sys
 import json
 import os
 from api_client import fetch_available_models
-from llm_preprocessor import PrePlanner
 from llm_processor import LLMProcessor
+from tools import get_tools_definitions
 
 # Set encoding to utf-8 for stdin/stdout/stderr to handle Chinese characters correctly
 sys.stdin.reconfigure(encoding='utf-8')
 sys.stdout.reconfigure(encoding='utf-8')
 sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+
+# Set working directory to project root (2 levels up from src/backend)
+# This ensures that file operations performed by tools default to the workspace root
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(os.path.dirname(current_dir))
+if os.path.exists(project_root):
+    os.chdir(project_root)
 
 def main():
     try:
@@ -21,9 +28,19 @@ def main():
         command_type = request_data.get('type', 'chat') # Default to chat
         config = request_data.get('config', {})
         
+        # 0. Set Workspace Path if provided
+        workspace_path = config.get('workspacePath')
+        if workspace_path and os.path.exists(workspace_path):
+            os.chdir(workspace_path)
+        
         # 1. Extract Configuration
         api_key = config.get('apiKey')
         base_url = config.get('baseUrl')
+
+        if command_type == 'get_tools':
+            tools = get_tools_definitions()
+            print(json.dumps({'tools': tools}))
+            return
 
         if not api_key:
             print(json.dumps({'error': 'Missing API Key. Please configure it in settings.'}))
@@ -35,40 +52,19 @@ def main():
             return
 
         message = request_data.get('message')
+        history = request_data.get('history', [])
         workspace_path = config.get('workspacePath')
 
-        # Initialize PrePlanner
-        pre_planner = PrePlanner(config)
-        
-        # Context for PrePlanner
-        context = {
-            'workspacePath': workspace_path,
-            'query': message,
-            'files': config.get('files', []) # Use files attached by user
-        }
-
-        # Notify UI of "Thinking" state (optional, if UI supports it)
-        # print(json.dumps({'chunk': '<thinking>\nAnalyzing workspace...\n'}))
-        # sys.stdout.flush()
-
-        # 2. Determine Context Files
-        # whichFiles is now a generator that yields status updates
-        
-        selected_files = []
-        for event in pre_planner.whichFiles(context):
-            if event['type'] == 'status':
-                # Ensure unicode characters are preserved in output
-                print(json.dumps({'chunk': event['content']}, ensure_ascii=False))
-                sys.stdout.flush()
-            elif event['type'] == 'result':
-                selected_files = event['files']
-        
-        # 3. Determine Model
-        model_id = pre_planner.whichModels(selected_files)
-        
         # 4. Process with LLM
         processor = LLMProcessor(config)
-        stream = processor.process(message, selected_files, model_id)
+        
+        # Use user-attached files if any
+        selected_files = config.get('files', [])
+        
+        # Determine model (simple fallback)
+        model_id = config.get('standardTextModel') or 'gpt-4'
+        
+        stream = processor.process(message, history, selected_files, model_id)
 
         # 5. Output the result as JSON chunks with parsing
         buffer = ""

@@ -5,8 +5,8 @@ import { electronAPI } from '@electron-toolkit/preload'
 const api = {
   chat: (message: string, config?: any) => ipcRenderer.invoke('ai:chat', message, config),
   fetchModels: (config: any) => ipcRenderer.invoke('ai:fetch-models', config),
-  chatStream: (message: string, config: any, onChunk: (chunk: string) => void, onDone: () => void, onError: (error: string) => void) => {
-    ipcRenderer.send('ai:chat-stream', { message, config });
+  chatStream: (message: string, history: any[], config: any, onChunk: (chunk: string) => void, onDone: () => void, onError: (error: string) => void) => {
+    ipcRenderer.send('ai:chat-stream', { message, history, config });
     
     const chunkHandler = (_: any, chunk: string) => onChunk(chunk);
     const doneHandler = () => {
