@@ -1,7 +1,13 @@
 node_modules
 dist
+dist_electron/
 out
 .DS_Store
 .env
 .env.*
 *.local
+.venv/
+__pycache__/
+*.spec
+build/
+resources
