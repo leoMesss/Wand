@@ -9,7 +9,6 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
-  model?: string;
 }
 
 interface ProviderConfig {
@@ -22,7 +21,6 @@ interface ProviderConfig {
   embeddingModel: string;
   rerankModel: string;
   baseUrl: string;
-  model: string;
   temperature: number;
 }
 
@@ -392,7 +390,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ workspacePath }) => {
       embeddingModel: '',
       rerankModel: '',
       baseUrl: '',
-      model: '自定义模型',
       temperature: 0.3
     };
 
@@ -436,7 +433,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ workspacePath }) => {
                 embeddingModel: parsed.embeddingModel || '',
                 rerankModel: parsed.rerankModel || '',
                 baseUrl: parsed.baseUrl || '',
-                model: parsed.model || '自定义模型',
                 temperature: parsed.temperature || 0.3
             };
         }
@@ -507,7 +503,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ workspacePath }) => {
       embeddingModel: settings.embeddingModel,
       rerankModel: settings.rerankModel,
       baseUrl: settings.baseUrl,
-      model: settings.model,
       temperature: settings.temperature
     };
 
@@ -527,7 +522,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ workspacePath }) => {
       embeddingModel: '',
       rerankModel: '',
       baseUrl: '',
-      model: '自定义模型',
       temperature: 0.3
     };
 
@@ -605,17 +599,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ workspacePath }) => {
     const currentAttachedFiles = [...attachedFiles];
     setAttachedFiles([]); // Clear attachments after sending
 
-    // Determine which model to use
-    const effectiveModelId = settings.standardTextModel || settings.highSpeedTextModel || settings.longContextModel || 'gpt-3.5-turbo';
-
     // Create a placeholder for the AI response
     const aiResponseId = (Date.now() + 1).toString();
     const aiResponse: Message = {
       id: aiResponseId,
       role: 'assistant',
       content: '',
-      timestamp: Date.now(),
-      model: effectiveModelId
+      timestamp: Date.now()
     };
     setMessages(prev => [...prev, aiResponse]);
 
@@ -624,7 +614,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ workspacePath }) => {
       // Call the AI service via IPC with streaming
       const config = { 
         ...settings, 
-        customModelId: effectiveModelId, 
         workspacePath,
         files: currentAttachedFiles.map(f => f.path) // Pass attached files
       };

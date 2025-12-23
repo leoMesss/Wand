@@ -4,6 +4,7 @@ import sys
 import re
 from api_client import chat_completion_stream
 from tools import get_tools_definitions, execute_tool, set_llm_config
+from ShareMemory.P0_config import P0Config
 
 # Ensure stdout/stderr use UTF-8 to prevent encoding errors on Windows
 if sys.platform == 'win32':
@@ -36,65 +37,16 @@ class LLMProcessor:
         self.base_url = config.get('baseUrl')
         set_llm_config(config)
 
-    def process(self, query, history, context_files, model_id):
-        # Update config with current model so tools can use it
-        self.config['model'] = model_id
+    def process(self, query, history, context_files):
+        # Ensure tools have the latest config (including model)
         set_llm_config(self.config)
+        model_id = self.config.get(P0Config.KEY_LLM_PROCESSER_MODEL)
 
         # 1. Construct System Prompt with Tools
         tools_definitions = get_tools_definitions()
         tools_json = json.dumps(tools_definitions, indent=2)
         
-        system_prompt = f"""You are an advanced AI assistant capable of analyzing code and performing tasks.
-You have access to the following tools:
-
-{tools_json}
-
-Process:
-1. THINK: Analyze the user's request. Plan your steps.
-2. ACTION: If you need more information or need to perform an action, call a tool.
-3. RESPONSE: When you have the answer, provide the final response.
-
-To call a tool, use the following format inside a <tool> tag:
-
-<tool>
-✿FUNCTION✿: tool_name
-✿ARGS✿: {{"arg1": "value1", "arg2": "value2"}}
-</tool>
-
-IMPORTANT:
-- The content inside <tool> must strictly follow the `✿FUNCTION✿: name` and `✿ARGS✿: json_object` format.
-- `✿ARGS✿` must be a valid JSON object.
-- You can only call one tool at a time.
-- STOP generating immediately after the closing </tool> tag.
-- Wait for the tool result before proceeding.
-- **PRIORITY 1: USE EXISTING TOOLS.** Before creating a new tool, you MUST check if the task can be accomplished by:
-  1. Using an existing tool from the list above.
-  2. Combining your own capabilities (e.g., generating text, code, or logic) with an existing tool (e.g., `write_file`).
-- **DO NOT create tools for simple content generation.**
-  - BAD: Create a tool to generate a joke. (You can generate the joke yourself!)
-  - BAD: Create a tool to write a specific file. (Use `write_file` with the content you generated.)
-- **ONLY use `create_tool` if:**
-  - The task requires executing code that you cannot simulate (e.g., complex math, external API calls, system operations).
-  - The functionality is completely missing from the provided tools.
-- If you truly need a new tool, use `create_tool`:
-  - Provide a detailed description of the tool you need in the `requirement` argument.
-  - The system will generate the tool code for you.
-  - Once created, you can call the new tool in the next turn.
-- **CRITICAL: When requesting new tools, describe them as GENERIC and REUSABLE functions.**
-  - BAD Requirement: "Create a tool that writes a joke about cats to cat.txt"
-  - GOOD Requirement: "Create a tool that writes text content to a file at a given path."
-  - Always design tools to accept arguments for dynamic data.
-
-Format your response:
-
-<thinking>
-[Your thought process]
-</thinking>
-<subtitle>[Short summary of the thought process]</subtitle>
-
-[Tool Call or Final Response]
-"""
+        system_prompt = P0Config.LLM_PROCESSOR_SYSTEM_PROMPT.format(tools_json=tools_json)
 
         # Initial User Prompt
         # We don't pre-read files anymore, the LLM must decide to read them.
@@ -122,7 +74,7 @@ User Query: {query}
         messages.append({"role": "user", "content": user_prompt})
 
         # Loop for tool calls
-        max_turns = 10
+        max_turns = 50
         current_turn = 0
         
         while current_turn < max_turns:
@@ -208,4 +160,9 @@ User Query: {query}
             else:
                 # No tool call, assume completion
                 break
+        
+        if current_turn >= max_turns:
+            limit_msg = f"\n[System] Maximum conversation turns ({max_turns}) reached. Stopping execution."
+            sys.stderr.write(limit_msg + "\n")
+            yield MockChunk(limit_msg)
 

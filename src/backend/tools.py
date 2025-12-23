@@ -5,10 +5,10 @@ import hashlib
 import re
 from datetime import datetime
 from api_client import chat_completion
+from ShareMemory.P0_config import P0Config
 
 # --- Registry ---
 
-TOOLS = {}
 LLM_CONFIG = {}
 TOOLS_TMP_FILE = os.path.join(os.path.dirname(__file__), 'tools_tmp.py')
 
@@ -27,13 +27,13 @@ def clear_temporary_tools():
 
 def register_tool(func):
     """Decorator to register a function as a tool."""
-    TOOLS[func.__name__] = func
+    P0Config.TOOLS.register(func)
     return func
 
 def get_tools_definitions():
     """Returns a list of tool definitions for the LLM."""
     definitions = []
-    for name, func in TOOLS.items():
+    for name, func in P0Config.TOOLS.get_visible_tools().items():
         doc = func.__doc__ or ""
         sig = inspect.signature(func)
         params = {}
@@ -69,9 +69,10 @@ def get_tools_definitions():
 
 def execute_tool(_tool_name, **kwargs):
     """Executes a registered tool."""
-    if _tool_name in TOOLS:
+    func = P0Config.TOOLS.get_tool_func(_tool_name)
+    if func:
         try:
-            return TOOLS[_tool_name](**kwargs)
+            return func(**kwargs)
         except Exception as e:
             return f"Error executing tool {_tool_name}: {str(e)}"
     return f"Tool {_tool_name} not found."
@@ -147,41 +148,41 @@ def read_file(file_path: str) -> str:
     except Exception as e:
         return f"Error reading file: {str(e)}"
 
-@register_tool
-def save_tool(name: str, code: str, description: str):
-    """
-    Permanently saves a tool that was previously created in memory.
+# @register_tool
+# def save_tool(name: str, code: str, description: str):
+#     """
+#     Permanently saves a tool that was previously created in memory.
     
-    Args:
-        name: The name of the tool function.
-        code: The full Python code of the tool.
-        description: The description of the tool.
-    """
-    target_file = os.path.join(os.path.dirname(__file__), 'tools_gen.py')
+#     Args:
+#         name: The name of the tool function.
+#         code: The full Python code of the tool.
+#         description: The description of the tool.
+#     """
+#     target_file = os.path.join(os.path.dirname(__file__), 'tools_gen.py')
     
-    # Ensure code has @register_tool decorator if missing
-    if "@register_tool" not in code:
-        code = "@register_tool\n" + code
+#     # Ensure code has @register_tool decorator if missing
+#     if "@register_tool" not in code:
+#         code = "@register_tool\n" + code
 
-    # Explicitly set the docstring ONLY if not already present in the code
-    # We check for triple quotes as a heuristic for existing docstrings
-    has_docstring = '"""' in code or "'''" in code
-    if not has_docstring and f"{name}.__doc__ =" not in code:
-        code += f"\n{name}.__doc__ = {json.dumps(description)}"
+#     # Explicitly set the docstring ONLY if not already present in the code
+#     # We check for triple quotes as a heuristic for existing docstrings
+#     has_docstring = '"""' in code or "'''" in code
+#     if not has_docstring and f"{name}.__doc__ =" not in code:
+#         code += f"\n{name}.__doc__ = {json.dumps(description)}"
 
-    # Format description as comments, handling multiple lines
-    commented_desc = "\n".join([f"# {line}" for line in description.split('\n')])
+#     # Format description as comments, handling multiple lines
+#     commented_desc = "\n".join([f"# {line}" for line in description.split('\n')])
 
-    new_tool_code = f"\n\n# --- Tool: {name} ---\n"
-    new_tool_code += f"{commented_desc}\n"
-    new_tool_code += code + "\n"
+#     new_tool_code = f"\n\n# --- Tool: {name} ---\n"
+#     new_tool_code += f"{commented_desc}\n"
+#     new_tool_code += code + "\n"
     
-    try:
-        with open(target_file, 'a', encoding='utf-8') as f:
-            f.write(new_tool_code)
-        return f"Tool '{name}' has been permanently saved to tools_gen.py."
-    except Exception as e:
-        return f"Error saving tool: {str(e)}"
+#     try:
+#         with open(target_file, 'a', encoding='utf-8') as f:
+#             f.write(new_tool_code)
+#         return f"Tool '{name}' has been permanently saved to tools_gen.py."
+#     except Exception as e:
+#         return f"Error saving tool: {str(e)}"
 
 def _register_tool_memory(name: str, code: str, description: str):
     """
@@ -222,7 +223,7 @@ def _register_tool_memory(name: str, code: str, description: str):
             print(f"Warning: Failed to write to tools_tmp.py: {file_err}")
 
         # Get signature
-        func = TOOLS.get(name)
+        func = P0Config.TOOLS.get_tool_func(name)
         sig = "(...)"
         if func:
             try:
@@ -251,7 +252,7 @@ def create_tool(requirement: str):
     The tool is created in MEMORY only. To save it permanently, the user must confirm.
     
     Args:
-        requirement: A detailed description of what the tool should do.
+        requirement: A detailed description of what the tool should do. It should include a standard comment template with a detailed description, Args (with input examples), and Returns to ensure clear input formats.
     """
     if not LLM_CONFIG:
         return "Error: LLM configuration not set. Cannot use Code Agent."
@@ -263,7 +264,7 @@ Your task is to write a Python function based on the user's requirement.
 Rules:
 1. The function must be generic and reusable.
 2. The function must be fully self-contained (import necessary modules inside the function).
-3. The function must have a clear docstring describing its purpose, arguments, and return value.
+3. The function must have a standard docstring including a detailed description, an 'Args:' section with clear types and input examples for each parameter to avoid ambiguity, and a 'Returns:' section. If an argument is a file path, explicitly describe the expected file format.
 4. The function name should be snake_case and descriptive.
 5. You must output the code inside a markdown code block: ```python ... ```
 6. You must also provide a short description and the function name.
@@ -277,6 +278,15 @@ Description: <short_description>
 Code:
 ```python
 def function_name(...):
+    \"\"\"
+    Detailed description of the function.
+
+    Args:
+        param1 (type): Description. Example: "example_value"
+    
+    Returns:
+        type: Description of return value.
+    \"\"\"
     ...
 ```
 """
@@ -286,53 +296,88 @@ def function_name(...):
         {"role": "user", "content": f"Create a tool for this requirement: {requirement}"}
     ]
 
-    # 2. Call LLM
-    try:
-        # Use the same model as the main LLM
-        model = LLM_CONFIG.get('model')
-        
-        response = chat_completion(
-            api_key=LLM_CONFIG.get('apiKey'),
-            base_url=LLM_CONFIG.get('baseUrl'),
-            model=model,
-            messages=messages
-        )
-    except Exception as e:
-        return f"Error calling Code Agent: {str(e)}"
+    max_retries = 3
+    last_error = None
 
-    # 3. Parse Response
-    name_match = re.search(r"Name:\s*(.+)", response)
-    desc_match = re.search(r"Description:\s*(.+)", response)
-    code_match = re.search(r"```python\s*(.*?)\s*```", response, re.DOTALL)
+    for attempt in range(max_retries):
+        # 2. Call LLM
+        try:
+            # Use standardTextModel for code generation if available (usually smarter), 
+            # otherwise fallback to high speed model.
+            model = LLM_CONFIG.get('standardTextModel') or LLM_CONFIG.get('highSpeedTextModel')
+            
+            response = chat_completion(
+                api_key=LLM_CONFIG.get('apiKey'),
+                base_url=LLM_CONFIG.get('baseUrl'),
+                model=model,
+                messages=messages
+            )
+        except Exception as e:
+            return f"Error calling Code Agent: {str(e)}"
 
-    if not (name_match and desc_match and code_match):
-        # Fallback logic
-        if code_match:
+        # 3. Parse Response
+        name_match = re.search(r"Name:\s*(.+)", response)
+        desc_match = re.search(r"Description:\s*(.+)", response)
+        code_match = re.search(r"```python\s*(.*?)\s*```", response, re.DOTALL)
+
+        name = None
+        description = None
+        code = None
+
+        if name_match and desc_match and code_match:
+            name = name_match.group(1).strip()
+            code = code_match.group(1).strip()
+            # Prefer docstring
+            docstring_match = re.search(r'"""(.*?)"""', code, re.DOTALL)
+            if docstring_match:
+                description = docstring_match.group(1).strip()
+            else:
+                description = desc_match.group(1).strip()
+        elif code_match:
+            # Fallback
             code = code_match.group(1).strip()
             def_match = re.search(r"def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(", code)
             if def_match:
                 name = def_match.group(1)
-                # Try to extract docstring from code
                 docstring_match = re.search(r'"""(.*?)"""', code, re.DOTALL)
                 if docstring_match:
                     description = docstring_match.group(1).strip()
                 else:
                     description = requirement
-                return _register_tool_memory(name, code, description)
         
-        return f"Error: Code Agent failed to generate valid output.\nResponse:\n{response}"
+        if not name or not code:
+             last_error = "Failed to parse output format."
+             messages.append({"role": "assistant", "content": response})
+             messages.append({"role": "user", "content": f"Error: {last_error} Please ensure you follow the Output Format exactly."})
+             continue
 
-    name = name_match.group(1).strip()
-    # Prefer the docstring from the code if available, as it is more detailed
-    code = code_match.group(1).strip()
-    docstring_match = re.search(r'"""(.*?)"""', code, re.DOTALL)
-    if docstring_match:
-        description = docstring_match.group(1).strip()
-    else:
-        description = desc_match.group(1).strip()
+        # 4. Sandbox Verification
+        try:
+            # Syntax Check
+            compile(code, '<string>', 'exec')
+            
+            # Definition Check
+            sandbox_globals = {}
+            # We might need to mock imports or provide context if the tool relies on them, 
+            # but the prompt says "self-contained".
+            exec(code, sandbox_globals)
+            
+            if name not in sandbox_globals:
+                raise ValueError(f"Function '{name}' was not defined in the generated code.")
+            
+            if not callable(sandbox_globals[name]):
+                raise ValueError(f"'{name}' is not a callable function.")
 
-    # 4. Register in Memory
-    return _register_tool_memory(name, code, description)
+            # If successful, register
+            return _register_tool_memory(name, code, description)
+
+        except Exception as verify_err:
+            last_error = f"Sandbox Verification Failed: {str(verify_err)}"
+            messages.append({"role": "assistant", "content": response})
+            messages.append({"role": "user", "content": f"The code you generated failed verification:\n{last_error}\n\nPlease fix the code and output the full corrected response following the same format."})
+            continue
+
+    return f"Failed to create tool after {max_retries} attempts. Last error: {last_error}"
 
 @register_tool
 def list_files(directory_path: str) -> list:
