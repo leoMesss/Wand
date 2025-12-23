@@ -11,3 +11,4 @@ __pycache__/
 *.spec
 build/
 resources
+.wand/
