@@ -1,48 +1,13 @@
 
-class ToolRegistry:
-    def __init__(self):
-        self._registry = {}
-
-    def register(self, func):
-        name = func.__name__
-        self._registry[name] = {
-            "name": name,
-            "description": func.__doc__ or "",
-            "is_visible": True,
-            "func": func
-        }
-
-    def get_all_tools(self):
-        """Returns a dictionary of all tools with their metadata."""
-        return {k: {x: y for x, y in v.items() if x != 'func'} for k, v in self._registry.items()}
-
-    def get_visible_tools(self):
-        """Returns a dictionary of visible tools mapping name to function."""
-        return {k: v['func'] for k, v in self._registry.items() if v['is_visible']}
-
-    def set_visibility(self, name, is_visible):
-        if name in self._registry:
-            self._registry[name]['is_visible'] = is_visible
-
-    def set_all_visible(self):
-        for v in self._registry.values():
-            v['is_visible'] = True
-
-    def get_tool_func(self, name):
-        tool = self._registry.get(name)
-        return tool['func'] if tool else None
-
-    def __contains__(self, name):
-        return name in self._registry
-
-class P0Config:
+class P10Config:
     """
-    P0 Configuration for Backend
+    P10 Configuration for Backend
     Stores critical configuration including model preferences and system prompts.
     """
     
     # Runtime Configuration (Global State)
-    TOOLS = ToolRegistry()
+    # TOOLS will be initialized in tools.py to avoid circular imports
+    TOOLS = None
 
     # Default Model Configuration Keys
     # These keys are expected to be present in the config dictionary passed from the frontend

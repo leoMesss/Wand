@@ -4,7 +4,7 @@ import sys
 import re
 from api_client import chat_completion_stream
 from tools import get_tools_definitions, execute_tool, set_llm_config
-from ShareMemory.P0_config import P0Config
+from ShareMemory.P10_config import P10Config
 
 # Ensure stdout/stderr use UTF-8 to prevent encoding errors on Windows
 if sys.platform == 'win32':
@@ -40,13 +40,13 @@ class LLMProcessor:
     def process(self, query, history, context_files):
         # Ensure tools have the latest config (including model)
         set_llm_config(self.config)
-        model_id = self.config.get(P0Config.KEY_LLM_PROCESSER_MODEL)
+        model_id = self.config.get(P10Config.KEY_LLM_PROCESSER_MODEL)
 
         # 1. Construct System Prompt with Tools
         tools_definitions = get_tools_definitions()
         tools_json = json.dumps(tools_definitions, indent=2)
         
-        system_prompt = P0Config.LLM_PROCESSOR_SYSTEM_PROMPT.format(tools_json=tools_json)
+        system_prompt = P10Config.LLM_PROCESSOR_SYSTEM_PROMPT.format(tools_json=tools_json)
 
         # Initial User Prompt
         # We don't pre-read files anymore, the LLM must decide to read them.

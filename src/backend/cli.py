@@ -4,7 +4,7 @@ import os
 from api_client import fetch_available_models
 from llm_processor import LLMProcessor
 from tools import get_tools_definitions
-from ShareMemory.P0_config import P0Config
+from ShareMemory.P10_config import P10Config
 
 # Set encoding to utf-8 for stdin/stdout/stderr to handle Chinese characters correctly
 sys.stdin.reconfigure(encoding='utf-8')
@@ -78,7 +78,7 @@ def main():
 
         # 5. Output the result as JSON chunks with parsing
         buffer = ""
-        state = "NORMAL" # NORMAL, THINKING
+        state = "NORMAL" # NORMAL, THINKING, TOOL
         
         def print_chunk(text):
             print(json.dumps({'chunk': text}, ensure_ascii=False))
@@ -92,11 +92,21 @@ def main():
             
             while True:
                 if state == "NORMAL":
+                    # Check for <thinking>
                     if "<thinking>" in buffer:
                         pre, post = buffer.split("<thinking>", 1)
                         if pre: print_chunk(pre)
                         print_chunk("<thinking>")
                         state = "THINKING"
+                        buffer = post
+                        continue
+                    
+                    # Check for <tool>
+                    if "<tool>" in buffer:
+                        pre, post = buffer.split("<tool>", 1)
+                        if pre: print_chunk(pre)
+                        print_chunk("<tool>")
+                        state = "TOOL"
                         buffer = post
                         continue
                     
@@ -114,6 +124,26 @@ def main():
                         pre, post = buffer.split("</thinking>", 1)
                         if pre: print_chunk(pre)
                         print_chunk("</thinking>")
+                        state = "NORMAL"
+                        buffer = post
+                        continue
+                    
+                    # Safe flush: Don't flush if buffer ends with partial tag
+                    last_open = buffer.rfind("<")
+                    if last_open != -1 and len(buffer) - last_open < 20:
+                        to_print = buffer[:last_open]
+                        buffer = buffer[last_open:]
+                        if to_print: print_chunk(to_print)
+                    else:
+                        print_chunk(buffer)
+                        buffer = ""
+                    break
+
+                elif state == "TOOL":
+                    if "</tool>" in buffer:
+                        pre, post = buffer.split("</tool>", 1)
+                        if pre: print_chunk(pre)
+                        print_chunk("</tool>")
                         state = "NORMAL"
                         buffer = post
                         continue

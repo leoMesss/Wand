@@ -1,0 +1,206 @@
+{
+  "electron.vite.config.ts": {
+    "hash": "714b93d817991cbe1d0cdd1cdcf88428",
+    "path": "D:\\Wand\\electron.vite.config.ts",
+    "description": "This Vite configuration file sets up a build environment for an Electron application using the `electron-vite` framework. It configures separate builds for the main process, preload script, and renderer process, with dependency externalization to avoid bundling Node.js modules in the main and preload scripts. The renderer process is configured to use React via the `@vitejs/plugin-react` plugin and includes an alias for `@renderer` pointing to the source directory.",
+    "last_modified": "2025-12-23T23:43:18.335679"
+  },
+  "package-lock.json": {
+    "hash": "3f569bdeb5324437bec28841afc46e13",
+    "path": "D:\\Wand\\package-lock.json",
+    "description": "The `package-lock.json` file is a dependency lockfile for the \"wand-assistant\" project, ensuring consistent package versions across environments. It lists both production dependencies (e.g., React, Tailwind CSS, Electron) and development dependencies (e.g., TypeScript, Vite, Babel) required to build and run the application. The file enforces precise versioning and includes metadata like integrity hashes and licensing information for all packages.",
+    "last_modified": "2025-12-23T23:43:20.544222"
+  },
+  "package.json": {
+    "hash": "385713779190c6f12bebd2dc3392a4bc",
+    "path": "D:\\Wand\\package.json",
+    "description": "The `package.json` file defines a React-based Electron application named \"wand-assistant,\" designed as an AI assistant with a Cursor-like architecture. It leverages modern web technologies like React, Tailwind CSS, and Vite for efficient development and builds, with scripts for dev, build, and preview workflows. The app includes dependencies for rendering markdown, PDFs, and UI components, supported by TypeScript and Electron for cross-platform desktop functionality.",
+    "last_modified": "2025-12-23T23:43:22.164948"
+  },
+  "postcss.config.js": {
+    "hash": "762a94d1749c8e97eebf3f94102e8eb2",
+    "path": "D:\\Wand\\postcss.config.js",
+    "description": "The `postcss.config.js` file configures PostCSS to process CSS with Tailwind CSS and Autoprefixer. It enables Tailwind's utility-first styling and automatically adds vendor prefixes for browser compatibility. This setup streamlines CSS development by enhancing responsiveness and reducing manual prefixing.",
+    "last_modified": "2025-12-23T23:43:23.863145"
+  },
+  "README.md": {
+    "hash": "cb9c72e680fdb6ab224ac426cfdb8c68",
+    "path": "D:\\Wand\\README.md",
+    "description": "Wand 是一个基于 Electron 与 React 构建的多功能 AI 助手应用，集成了 AI 对话、代码编辑、文件管理与智能工具调用功能，支持多模型服务与流式响应，并通过 Python 后端实现动态工具执行。其现代化 UI 支持 Markdown、PDF、HTML 等多格式预览和标签页管理，提供可自定义的配置与开发调试能力。项目结构清晰，适用于本地部署，旨在打造一体化的智能工作台体验。",
+    "last_modified": "2025-12-23T23:43:26.034655"
+  },
+  "tailwind.config.js": {
+    "hash": "927dc5596caa4a007be8b71c23e1a902",
+    "path": "D:\\Wand\\tailwind.config.js",
+    "description": "This Tailwind CSS configuration file defines the setup for a project using Tailwind's utility-first framework, specifying the content files to scan for class names and extending the default theme with custom color variables tied to CSS custom properties. It also includes the Typography plugin to enable stylistic typographic classes. The primary purpose is to support consistent, dynamic theming through CSS variables while maintaining clean, scalable styling.",
+    "last_modified": "2025-12-23T23:43:28.214010"
+  },
+  "tsconfig.json": {
+    "hash": "197fcc1eb2c2695ca392e59a2803149a",
+    "path": "D:\\Wand\\tsconfig.json",
+    "description": "This `tsconfig.json` file configures TypeScript for a modern React project, targeting ESNext JavaScript features and using ES modules with Node.js module resolution. It enables strict type checking, supports JSX with React, and allows importing JSON files and isolated modules while skipping library checks and disabling output compilation (`noEmit: true`).",
+    "last_modified": "2025-12-23T23:43:29.986173"
+  },
+  "out\\main\\index.js": {
+    "hash": "cddafa6be22e51f1f3155b798ceacfb2",
+    "path": "D:\\Wand\\out\\main\\index.js",
+    "description": "This Electron application serves as a bridge between a frontend interface and backend Python services, enabling AI chat functionality (via streaming responses, model fetching, and tool management) and file system operations (like opening directories, reading/writing files). It uses IPC to communicate with the frontend, spawning a Python CLI script (`cli.py`) for heavy-lifting tasks such as AI inference, model retrieval, and file handling. The core purpose is to securely and efficiently orchestrate external Python processes while providing a responsive, modular API for the UI.",
+    "last_modified": "2025-12-23T23:43:32.090616"
+  },
+  "out\\preload\\index.js": {
+    "hash": "45c7b3ab180ddd888b0928f77ebce1c0",
+    "path": "D:\\Wand\\out\\preload\\index.js",
+    "description": "This preload script establishes a secure communication bridge between the Electron frontend and backend, exposing a set of APIs for interacting with AI services (like chat and model fetching), file system operations, and dialog controls. It leverages `ipcRenderer` to send and receive messages asynchronously, with special support for streaming responses via event listeners that are properly cleaned up. The API is exposed via `contextBridge` when context isolation is enabled, ensuring security, or directly attached to the global `window` object otherwise.",
+    "last_modified": "2025-12-23T23:43:34.412568"
+  },
+  "src\\backend\\api_client.py": {
+    "hash": "cac03fcdc22a305397ebe17f948137ff",
+    "path": "D:\\Wand\\src\\backend\\api_client.py",
+    "description": "The `api_client.py` file provides a Python interface to interact with OpenAI's API, offering functions to fetch available models and perform chat completions (both non-streaming and streaming). It handles authentication via an API key and optional custom base URL, ensuring UTF-8 encoding for input/output streams. The module is designed for use in a backend or CLI environment, abstracting the underlying OpenAI client calls with error handling and debug logging.",
+    "last_modified": "2025-12-23T23:43:36.565826"
+  },
+  "src\\backend\\cli.py": {
+    "hash": "1d22341f38c599597df1d5d59a2508d7",
+    "path": "D:\\Wand\\src\\backend\\cli.py",
+    "description": "The `cli.py` file serves as the command-line interface for a backend system that processes user requests via stdin, handling tasks such as fetching LLM models, managing tools, and processing chat messages with streaming output. It supports various commands like model retrieval, tool management, and chat interactions, leveraging an LLM processor and configurable API settings. The script ensures proper encoding, handles file paths relative to the project root, and streams responses in real time with structured JSON chunks, including support for thinking markers (`<thinking>`) for intermediate reasoning.",
+    "last_modified": "2025-12-23T23:43:38.984929"
+  },
+  "src\\backend\\llm_processor.py": {
+    "hash": "c36e0c7384281bd386f3d4b02659530d",
+    "path": "D:\\Wand\\src\\backend\\llm_processor.py",
+    "description": "The `LLMProcessor` class processes user queries by interacting with an LLM through a streaming API, dynamically invoking tools based on the model's output. It constructs system and user prompts with available tools, handles tool calls via a custom XML-like format (e.g., `<tool>✿FUNCTION✿: ...</tool>`), executes them using `execute_tool`, and streams results back to the caller. The process loops up to 50 turns, yielding intermediate responses and tool outputs, ensuring robust error handling and debug logging.",
+    "last_modified": "2025-12-23T23:43:41.137186"
+  },
+  "src\\backend\\requirements.txt": {
+    "hash": "6144661cbb364722718f9d2b022ea9ab",
+    "path": "D:\\Wand\\src\\backend\\requirements.txt",
+    "description": "The `requirements.txt` file specifies the Python dependencies needed to run a backend service using Flask, enabling cross-origin resource sharing (CORS) via `flask-cors`, integrating with OpenAI's APIs through `openai`, and processing PDF files using `pypdf`. Its purpose is to ensure consistent environment setup for a Flask-based application that handles AI-driven text processing from PDFs.",
+    "last_modified": "2025-12-23T23:43:42.918358"
+  },
+  "src\\backend\\tools.py": {
+    "hash": "1ae1b8cee8e77132e522eba8f828334c",
+    "path": "D:\\Wand\\src\\backend\\tools.py",
+    "description": "The `tools.py` file defines a tool registry system for managing executable functions (tools) in a Python-based agent framework, with configurable permission levels, visibility controls, and dynamic registration via decorators. It includes built-in tools for workspace scanning, file reading, and saving custom tools to disk, along with utilities for generating LLM-compatible tool definitions and executing tools safely. The system supports both temporary (in-memory) and permanent tool storage, with security checks to prevent dangerous code execution.",
+    "last_modified": "2025-12-23T23:43:45.113844"
+  },
+  "src\\backend\\tools_gen.py": {
+    "hash": "ac3b87a10868b9f0f0de30f4c0de2853",
+    "path": "D:\\Wand\\src\\backend\\tools_gen.py",
+    "description": "The `tools_gen.py` file defines AI-generated tools for backend use, with a primary function `read_excel_to_dict_list` that reads Excel files and converts them into a list of dictionaries—one per row—with column headers as keys. It supports optional row limits and handles errors gracefully, including missing dependencies like pandas. The tool is registered using a decorator to make it available for integration in the system.",
+    "last_modified": "2025-12-23T23:43:46.762126"
+  },
+  "src\\backend\\tools_tmp.py": {
+    "hash": "77b4d669fbd3649fb7ca6e7540c3e46e",
+    "path": "D:\\Wand\\src\\backend\\tools_tmp.py",
+    "description": "This file defines three temporary tools for handling Excel files in a backend system. The `calculate_column_difference_in_excel` function computes the difference between two numeric columns and saves the result to a new column; `get_excel_column_headers` retrieves the column names from an Excel file; and `read_excel_to_dict_list` converts Excel data into a list of dictionaries, optionally limiting the number of rows. All tools use pandas for data processing and include error handling for common issues like missing files, invalid data types, or missing dependencies.",
+    "last_modified": "2025-12-23T23:43:48.442237"
+  },
+  "src\\backend\\ShareMemory\\P10_config.py": {
+    "hash": "7d92593e06da7a500b1e094e5deff0df",
+    "path": "D:\\Wand\\src\\backend\\ShareMemory\\P10_config.py",
+    "description": "The `P10Config` class defines essential backend configuration for an AI system, including default model keys and a structured system prompt for the LLM processor. The system prompt enforces a strict workflow (THINK → ACTION → RESPONSE) with precise tool-calling syntax and emphasizes prioritizing existing tools over creating new ones. It also guides users to request generic, reusable tools only when necessary, ensuring efficient and maintainable system behavior.",
+    "last_modified": "2025-12-23T23:43:50.383906"
+  },
+  "src\\main\\ai-service.ts": {
+    "hash": "6d5283683aa60a42ff4929aa4c36acd1",
+    "path": "D:\\Wand\\src\\main\\ai-service.ts",
+    "description": "The `AIService` class in `ai-service.ts` acts as a bridge between the Electron frontend and a Python backend (via `cli.py`), handling AI-related operations such as streaming chat responses, fetching models, retrieving tools, saving and clearing temporary tools. It uses IPC to communicate with the frontend, spawning a Python process for each request and streaming back chunks of AI output or errors. The service supports real-time chat streaming, process cancellation, and seamless integration with external AI services through Python scripts.",
+    "last_modified": "2025-12-23T23:43:52.791275"
+  },
+  "src\\main\\file-service.ts": {
+    "hash": "acc9e7509c35f75892fad7e685eaa8d4",
+    "path": "D:\\Wand\\src\\main\\file-service.ts",
+    "description": "The `FileService` class in `file-service.ts` provides a set of Electron IPC handlers for file and directory operations, enabling the frontend to interact with the file system securely. It supports opening directories, selecting files, saving files, reading files (with size limits and binary detection), and listing directory contents with proper sorting. Files are returned as text, base64-encoded data URIs, or PDFs as base64, ensuring safe handling of large or binary content.",
+    "last_modified": "2025-12-23T23:43:55.033859"
+  },
+  "src\\main\\index.ts": {
+    "hash": "f8648ad82a180f3938d435b2d06da7b5",
+    "path": "D:\\Wand\\src\\main\\index.ts",
+    "description": "This Electron application initializes a custom-styled, frameless window with a hidden title bar and overlay controls, loading either a remote URL (in development) or local HTML (in production). It sets up background services for AI and file operations, ensures proper app lifecycle management (including macOS-specific behavior), and handles external link openings securely. The app uses Electron-Toolkit utilities for developer convenience and platform-specific optimizations.",
+    "last_modified": "2025-12-23T23:43:57.161612"
+  },
+  "src\\preload\\index.d.ts": {
+    "hash": "c646471f083dc8be5cb20ca9fa839396",
+    "path": "D:\\Wand\\src\\preload\\index.d.ts",
+    "description": "This TypeScript declaration file defines the global interface for Electron's preload script, exposing a set of APIs to the browser environment. It enables communication between the frontend and backend by declaring methods for chat interactions, file and directory operations, and tool management. The key functionality includes streaming chat responses, reading/writing files, browsing directories, and managing saved tools.",
+    "last_modified": "2025-12-23T23:43:58.713626"
+  },
+  "src\\preload\\index.ts": {
+    "hash": "38bea0b55f9cb895651e59a1930f418c",
+    "path": "D:\\Wand\\src\\preload\\index.ts",
+    "description": "This file defines a set of custom Electron APIs exposed to the renderer process via `contextBridge`, enabling secure communication between the frontend and backend. It provides functions for AI chat interactions (including streaming), file and directory operations, and tool management, all routed through IPC. The APIs are made available globally in the renderer either via `contextBridge` (when context isolation is enabled) or directly on the `window` object otherwise.",
+    "last_modified": "2025-12-23T23:44:00.732354"
+  },
+  "src\\renderer\\index.html": {
+    "hash": "69d20a671c7f087379595db34bfee8ea",
+    "path": "D:\\Wand\\src\\renderer\\index.html",
+    "description": "This file is the main HTML entry point for a web application named \"Wand - All-Purpose Assistant.\" It sets up a basic page structure with a root div for React rendering and loads the main TypeScript React application via `main.tsx`. The Content-Security-Policy header restricts script and style sources to the app's own origin, enhancing security.",
+    "last_modified": "2025-12-23T23:44:02.904970"
+  },
+  "src\\renderer\\src\\App.tsx": {
+    "hash": "c2997b49fad3a50195a87ff5dad3db11",
+    "path": "D:\\Wand\\src\\renderer\\src\\App.tsx",
+    "description": "This React application serves as a desktop IDE-like interface with support for file exploration, document viewing (PDF and Markdown), and code editing. It features a modular layout with resizable panels, a sidebar for navigation, a file explorer for project management, and integrated tools for file operations, including opening, saving, and closing files with keyboard shortcuts. The app leverages libraries like `react-pdf` for PDF rendering, `react-markdown` for content display, and Electron's API for file system interactions, providing a seamless workflow for developers managing multiple files and projects.",
+    "last_modified": "2025-12-23T23:44:05.602043"
+  },
+  "src\\renderer\\src\\env.d.ts": {
+    "hash": "33b379c14eac5ed31dc15709d7f954bf",
+    "path": "D:\\Wand\\src\\renderer\\src\\env.d.ts",
+    "description": "The `env.d.ts` file serves as a TypeScript declaration file to define global environment variables and types for the renderer process. It references Vite's client types and the preload script's type definitions, enabling type safety and proper IntelliSense in the renderer code. This setup ensures seamless communication between the main and renderer processes while supporting development-time type checking.",
+    "last_modified": "2025-12-23T23:44:07.571967"
+  },
+  "src\\renderer\\src\\index.css": {
+    "hash": "e80d14eef3fd204567807935c721106d",
+    "path": "D:\\Wand\\src\\renderer\\src\\index.css",
+    "description": "This CSS file defines the visual styling for a web application's UI, using Tailwind CSS and custom variables for a dark theme. It establishes consistent typography, scrollbars, and interactive elements—particularly for expandable details/summary sections used to display AI analysis steps—with dynamic icons (checkmarks or spinners) indicating completion or loading states. The design emphasizes readability, subtle animations, and a cohesive aesthetic through carefully crafted pseudo-elements and transitions.",
+    "last_modified": "2025-12-23T23:44:09.233179"
+  },
+  "src\\renderer\\src\\main.tsx": {
+    "hash": "c28766f25b1a6e62b5f3234fc0e72cc7",
+    "path": "D:\\Wand\\src\\renderer\\src\\main.tsx",
+    "description": "This file initializes the React application in the browser by rendering the `App` component inside the DOM element with the ID \"root\". It uses React's strict mode to enforce best practices and includes global styles from `index.css`. The primary purpose is to bootstrap the frontend application.",
+    "last_modified": "2025-12-23T23:44:10.593122"
+  },
+  "src\\renderer\\src\\components\\ChatInterface.tsx": {
+    "hash": "d08ba5e8f1fb16b8de021a624523058d",
+    "path": "D:\\Wand\\src\\renderer\\src\\components\\ChatInterface.tsx",
+    "description": "The `ChatInterface.tsx` file implements a React-based chat interface with advanced features such as model selection dropdowns, tool call and result rendering (including temporary tool saving), markdown-rich message display, and responsive UI components. It supports dynamic model filtering, collapsible sections for detailed content, and integrates with AI providers through configurable settings. The component is designed for interactive, real-time conversation with AI agents, emphasizing usability, performance, and extensibility in a terminal-like interface.",
+    "last_modified": "2025-12-23T23:44:12.146019"
+  },
+  "src\\renderer\\src\\components\\EditorTabs.tsx": {
+    "hash": "b0e7f36adcb4c4e3b48e6c03f4908aa1",
+    "path": "D:\\Wand\\src\\renderer\\src\\components\\EditorTabs.tsx",
+    "description": "The `EditorTabs` component renders a draggable, interactive tab bar for a code editor, displaying open files with icons based on file type and visual indicators for unsaved changes. It supports clicking to switch active files, dragging to reorder tabs, and closing tabs with a close button that appears on hover or is always visible for unsaved files. The component is highly customizable via props and uses React state and event handlers to manage drag-and-drop reordering and tab interactions.",
+    "last_modified": "2025-12-23T23:44:14.102866"
+  },
+  "src\\renderer\\src\\components\\FileExplorer.tsx": {
+    "hash": "94336e8fc96bd5ff0be264461427edfb",
+    "path": "D:\\Wand\\src\\renderer\\src\\components\\FileExplorer.tsx",
+    "description": "The `FileExplorer.tsx` component provides a React-based file browser interface for navigating a project's directory structure, displaying files and folders with appropriate icons based on file type. It dynamically loads directory contents via asynchronous calls to a backend API (`window.api.readDirectory`) when folders are expanded, supports drag-and-drop, and allows file selection through a callback. The explorer includes collapsible sections for the file tree, timeline, and outline, with UI controls for refreshing, creating new files/folders, and toggling visibility.",
+    "last_modified": "2025-12-23T23:44:16.390090"
+  },
+  "src\\renderer\\src\\components\\MenuBar.tsx": {
+    "hash": "d942b779f7463f60192be76f6354394f",
+    "path": "D:\\Wand\\src\\renderer\\src\\components\\MenuBar.tsx",
+    "description": "The `MenuBar` component is a customizable, dropdown-based menu bar for a desktop application, providing access to file, edit, view, and other common actions through clickable menu items. It features responsive dropdown menus that appear on click or hover, with support for keyboard shortcuts and a search box in the center. The component uses React hooks and event listeners to manage state and handle clicks outside the menu to close it automatically.",
+    "last_modified": "2025-12-23T23:44:17.915982"
+  },
+  "src\\renderer\\src\\components\\Sidebar.tsx": {
+    "hash": "c783d30f6f3a6ee306d9f0585f69b1ea",
+    "path": "D:\\Wand\\src\\renderer\\src\\components\\Sidebar.tsx",
+    "description": "The `Sidebar` component is a vertical navigation sidebar in a React application, designed to provide quick access to primary app sections. It displays a single active tab indicator for \"Projects\" and includes a settings button at the bottom. The sidebar highlights the active tab with a white vertical bar and uses icons from `lucide-react` for visual clarity.",
+    "last_modified": "2025-12-23T23:44:19.462727"
+  },
+  "src\\renderer\\src\\components\\ToolsModal.tsx": {
+    "hash": "90585b74e38df61cd85179e5b3390d97",
+    "path": "D:\\Wand\\src\\renderer\\src\\components\\ToolsModal.tsx",
+    "description": "The `ToolsModal` component is a React modal that displays a list of available AI tools, fetched from a backend via Electron's IPC interface. It includes a refresh button to reload the tool list and a close button to dismiss the modal, with loading and error states handled gracefully. Each tool is rendered with its name, description, and parameter details in a formatted, readable layout.",
+    "last_modified": "2025-12-23T23:44:21.556707"
+  },
+  "src\\renderer\\src\\components\\WorkspaceView.tsx": {
+    "hash": "88c71191ca20f96c4627e36b9cbe35b7",
+    "path": "D:\\Wand\\src\\renderer\\src\\components\\WorkspaceView.tsx",
+    "description": "The `WorkspaceView` component serves as the initial landing interface for the Wand application, welcoming users with a clean, centered layout. It provides two primary interactive options: \"Open Project\" (triggering the `onOpenProject` callback) and \"Connect Tools\" (currently triggering a placeholder alert). The view emphasizes usability and onboarding by highlighting key features for coding, writing, and tool integration.",
+    "last_modified": "2025-12-23T23:44:23.604625"
+  }
+}

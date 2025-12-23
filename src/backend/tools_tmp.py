@@ -132,3 +132,23 @@ def read_excel_to_dict_list(file_path, limit=5):
 
     except Exception as e:
         return f"Error: {str(e)}"
+
+
+# --- Temp Tool: add_numbers ---
+@register_tool
+def add_numbers(a, b):
+    """
+    Adds two numbers and returns the result.
+
+    Args:
+        a (float): The first number to add. Example: 5, 3.14
+        b (float): The second number to add. Example: 3, 2.86
+
+    Returns:
+        float: The sum of the two input numbers. Example: 8, 6.0
+    """
+    try:
+        result = float(a) + float(b)
+        return result
+    except (TypeError, ValueError) as e:
+        return f"Error: Invalid input. Both arguments must be numbers. Details: {e}"

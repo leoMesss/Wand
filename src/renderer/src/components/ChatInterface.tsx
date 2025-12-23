@@ -340,14 +340,19 @@ const MessageContent = ({ content, onSaveTool }: { content: string, onSaveTool?:
             remarkPlugins={[remarkGfm]} 
             rehypePlugins={[rehypeRaw]}
             components={{
+              pre: ({node, children, ...props}) => (
+                <div className="overflow-x-auto w-full my-2 rounded bg-[#2b2b2b] max-w-full">
+                  <pre className="p-2 min-w-full w-fit" {...props}>
+                    {children}
+                  </pre>
+                </div>
+              ),
               code({node, inline, className, children, ...props}: any) {
                 const match = /language-(\w+)/.exec(className || '')
                 return !inline && match ? (
-                  <div className="relative group">
-                    <code className={className} {...props}>
-                      {children}
-                    </code>
-                  </div>
+                  <code className={className} {...props}>
+                    {children}
+                  </code>
                 ) : (
                   <code className={`${className} bg-white/10 rounded px-1 py-0.5`} {...props}>
                     {children}
@@ -927,7 +932,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ workspacePath }) => {
             }`}>
               {msg.role === 'assistant' ? <Sparkles size={20} className="text-purple-400" /> : <User size={16} />}
             </div>
-            <div className={`flex flex-col max-w-[85%] ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+            <div className={`flex flex-col max-w-[85%] min-w-0 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
               {msg.role === 'assistant' && (
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-bold text-sm text-white">Wand AI</span>
@@ -937,7 +942,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ workspacePath }) => {
                 </div>
               )}
               
-              <div className={`px-4 py-2 rounded-lg text-sm ${
+              <div className={`px-4 py-2 rounded-lg text-sm w-full overflow-hidden ${
                 msg.role === 'assistant' 
                   ? `text-gray-300 pl-0 pt-0 prose prose-invert max-w-none prose-p:my-1 prose-pre:bg-[#2b2b2b] prose-pre:p-2 prose-pre:rounded ${isLoading && index === messages.length - 1 ? 'streaming-active' : ''}`
                   : 'bg-primary text-white'
