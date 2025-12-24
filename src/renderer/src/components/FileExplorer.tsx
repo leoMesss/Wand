@@ -142,6 +142,10 @@ const NewFileItem: React.FC<{
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!value) {
+      onCancel();
+      return;
+    }
     const err = validate(value);
     if (err) {
       setError(err);
@@ -153,6 +157,27 @@ const NewFileItem: React.FC<{
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
       onCancel();
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (!value) {
+        onCancel();
+      } else {
+        const err = validate(value);
+        if (!err) {
+          onCommit(value);
+        }
+      }
+    }
+  };
+
+  const handleBlur = () => {
+    if (!value) {
+      onCancel();
+    } else {
+      const err = validate(value);
+      if (!err) {
+        onCommit(value);
+      }
     }
   };
 
@@ -175,10 +200,7 @@ const NewFileItem: React.FC<{
             type="text"
             value={value}
             onChange={handleChange}
-            onBlur={() => {
-                if (!value) onCancel();
-                else if (!validate(value)) onCommit(value);
-            }}
+            onBlur={handleBlur}
             onKeyDown={handleKeyDown}
             className="w-full bg-[#3c3c3c] text-white border border-[#007fd4] outline-none px-1 h-[18px] leading-[18px]"
             onClick={(e) => e.stopPropagation()}
@@ -297,6 +319,10 @@ const FileTreeItem: React.FC<{
 
   const handleRenameSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!renameValue) {
+      onCancelRename();
+      return;
+    }
     const err = validateRename(renameValue);
     if (err) {
         setRenameError(err);
@@ -305,9 +331,34 @@ const FileTreeItem: React.FC<{
     onRename(node, renameValue);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleRenameKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
       onCancelRename();
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (!renameValue) {
+        onCancelRename();
+      } else if (renameValue === node.name) {
+        onCancelRename();
+      } else {
+        const err = validateRename(renameValue);
+        if (!err) {
+          onRename(node, renameValue);
+        }
+      }
+    }
+  };
+
+  const handleRenameBlur = () => {
+    if (!renameValue) {
+      onCancelRename();
+    } else if (renameValue === node.name) {
+      onCancelRename();
+    } else {
+      const err = validateRename(renameValue);
+      if (!err) {
+        onRename(node, renameValue);
+      }
     }
   };
 
@@ -341,8 +392,8 @@ const FileTreeItem: React.FC<{
               type="text"
               value={renameValue}
               onChange={handleRenameChange}
-              onBlur={() => onRename(node, renameValue)}
-              onKeyDown={handleKeyDown}
+              onBlur={handleRenameBlur}
+              onKeyDown={handleRenameKeyDown}
               className="w-full bg-[#3c3c3c] text-white border border-[#007fd4] outline-none px-1 h-[18px] leading-[18px]"
               onClick={(e) => e.stopPropagation()}
             />

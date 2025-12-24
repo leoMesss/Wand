@@ -9,6 +9,7 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
+  attachedFiles?: AttachedFile[];
 }
 
 interface ProviderConfig {
@@ -620,7 +621,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ workspacePath }) => {
       id: Date.now().toString(),
       role: 'user',
       content: input,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      attachedFiles: attachedFiles.length > 0 ? [...attachedFiles] : undefined
     };
 
     setMessages(prev => [...prev, newMessage]);
@@ -971,6 +973,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ workspacePath }) => {
                   ? `text-gray-300 pl-0 pt-0 prose prose-invert max-w-none prose-p:my-1 prose-pre:bg-[#2b2b2b] prose-pre:p-2 prose-pre:rounded ${isLoading && index === messages.length - 1 ? 'streaming-active' : ''}`
                   : 'bg-primary text-white'
               }`}>
+                {msg.attachedFiles && msg.attachedFiles.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {msg.attachedFiles.map((file, i) => (
+                      <div key={i} className="flex items-center gap-1 bg-black/20 border border-white/10 rounded px-2 py-1 text-xs">
+                        <Paperclip size={10} />
+                        <span className="truncate max-w-[150px]" title={file.path}>{file.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 {msg.role === 'assistant' ? (
                   <MessageContent 
                     content={msg.content} 
