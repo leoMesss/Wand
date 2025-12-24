@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
-import { Send, Paperclip, Mic, Bot, User, Settings, X, Sparkles, RefreshCw, ChevronDown, ChevronRight, Check, RotateCcw, Square, Terminal, Code2, Plus, Save, Loader2, Bug } from 'lucide-react';
+import { Send, Paperclip, Mic, Bot, User, Settings, X, Sparkles, RefreshCw, ChevronDown, ChevronRight, Check, RotateCcw, Square, Terminal, Code2, Plus, Save, Loader2, Bug, Copy } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -134,6 +134,30 @@ interface AttachedFile {
   name: string;
   size?: number;
 }
+
+const CopyButton = ({ content, className = "" }: { content: string, className?: string }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleCopy}
+      className={`p-1.5 hover:bg-white/10 rounded-md text-gray-400 hover:text-white transition-all opacity-0 group-hover:opacity-100 ${className}`}
+      title="Copy message"
+    >
+      {copied ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
+    </button>
+  );
+};
 
 const ToolCallBlock = ({ content }: { content: string }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -932,7 +956,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ workspacePath }) => {
             }`}>
               {msg.role === 'assistant' ? <Sparkles size={20} className="text-purple-400" /> : <User size={16} />}
             </div>
-            <div className={`flex flex-col max-w-[85%] min-w-0 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+            <div className={`flex flex-col max-w-[85%] min-w-0 group ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
               {msg.role === 'assistant' && (
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-bold text-sm text-white">Wand AI</span>
@@ -963,11 +987,17 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ workspacePath }) => {
                 )}
               </div>
               
-              {msg.role === 'user' && (
-                <span className="text-[10px] text-gray-500 mt-1">
-                  {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
-              )}
+              <div className="flex items-center gap-2 mt-1 px-1 h-6">
+                <CopyButton 
+                  content={msg.content} 
+                  className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-white" 
+                />
+                {msg.role === 'user' && (
+                  <span className="text-[10px] text-gray-500">
+                    {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         ))}

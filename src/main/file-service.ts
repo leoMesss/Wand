@@ -1,4 +1,4 @@
-import { ipcMain, dialog } from 'electron';
+import { ipcMain, dialog, shell } from 'electron';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -8,6 +8,71 @@ export class FileService {
   }
 
   private setupHandlers() {
+    ipcMain.handle('fs:createDirectory', async (_, dirPath: string) => {
+      try {
+        await fs.mkdir(dirPath, { recursive: true });
+        return true;
+      } catch (error) {
+        console.error('Error creating directory:', error);
+        throw error;
+      }
+    });
+
+    ipcMain.handle('fs:delete', async (_, filePath: string) => {
+      try {
+        const stats = await fs.stat(filePath);
+        if (stats.isDirectory()) {
+          await fs.rm(filePath, { recursive: true, force: true });
+        } else {
+          await fs.unlink(filePath);
+        }
+        return true;
+      } catch (error) {
+        console.error('Error deleting file/directory:', error);
+        throw error;
+      }
+    });
+
+    ipcMain.handle('fs:rename', async (_, oldPath: string, newPath: string) => {
+      try {
+        await fs.rename(oldPath, newPath);
+        return true;
+      } catch (error) {
+        console.error('Error renaming file/directory:', error);
+        throw error;
+      }
+    });
+
+    ipcMain.handle('fs:revealInExplorer', async (_, filePath: string) => {
+      shell.showItemInFolder(filePath);
+    });
+
+    ipcMain.handle('fs:copyFile', async (_, source: string, dest: string) => {
+      try {
+        // Simple file copy. For directories, it's more complex.
+        // Let's assume we might need to copy directories too.
+        const stats = await fs.stat(source);
+        if (stats.isDirectory()) {
+           await fs.cp(source, dest, { recursive: true });
+        } else {
+           await fs.copyFile(source, dest);
+        }
+        return true;
+      } catch (error) {
+        console.error('Error copying file:', error);
+        throw error;
+      }
+    });
+
+    ipcMain.handle('fs:exists', async (_, filePath: string) => {
+      try {
+        await fs.access(filePath);
+        return true;
+      } catch {
+        return false;
+      }
+    });
+
     ipcMain.handle('dialog:openDirectory', async () => {
       const { canceled, filePaths } = await dialog.showOpenDialog({
         properties: ['openDirectory']

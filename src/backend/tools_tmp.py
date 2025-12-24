@@ -152,3 +152,23 @@ def add_numbers(a, b):
         return result
     except (TypeError, ValueError) as e:
         return f"Error: Invalid input. Both arguments must be numbers. Details: {e}"
+
+
+# --- Temp Tool: calculate_sum_of_three ---
+@register_tool
+def calculate_sum_of_three(a, b, c):
+    """
+    Calculates the sum of three numbers.
+
+    Args:
+        a (float): The first number. Example: 1, 3.5
+        b (float): The second number. Example: 2, 4.0
+        c (float): The third number. Example: 3, 2.5
+
+    Returns:
+        float: The sum of a, b, and c. Example: 6, 10.0
+    """
+    try:
+        return float(a) + float(b) + float(c)
+    except (TypeError, ValueError) as e:
+        return f"Error: Invalid input. Ensure all inputs are numeric. Details: {e}"
