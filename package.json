@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
-    "preview": "electron-vite preview"
+    "preview": "electron-vite preview",
+    "pack:win": "npm run build && electron-builder --win --x64"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",
@@ -34,5 +35,42 @@
     "tailwindcss": "^3.4.0",
     "typescript": "^5.3.3",
     "vite": "^5.0.10"
+  },
+  "build": {
+    "appId": "com.wand.app",
+    "productName": "Wand",
+    "files": [
+      "out/**"
+    ],
+    "extraResources": [
+      {
+        "from": "src/backend",
+        "to": "backend"
+      }
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "Wand-${version}-Setup-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "publish": [
+      {
+        "provider": "github"
+      }
+    ]
   }
 }
