@@ -7,7 +7,7 @@ import re
 import concurrent.futures
 from datetime import datetime
 from api_client import chat_completion
-from ShareMemory.P10_config import P10Config
+from configs.P10_config import P10Config
 
 # --- Registry ---
 
@@ -143,6 +143,9 @@ def save_tool(name: str, code: str, description: str, permission_level: int = 9,
     if f"def {name}" not in code:
         return f"Error: The code must define a function named '{name}'. Please ensure your code contains 'def {name}(...):'."
 
+    if not description or not description.strip():
+        return "Error: Tool description is required. Please ensure your function has a docstring."
+
     # Remove @register_tool decorator if present
     lines = code.split('\n')
     clean_lines = [line for line in lines if not line.strip().startswith('@register_tool')]
@@ -277,12 +280,92 @@ def get_tools_definitions():
         })
     return definitions
 
+def _convert_tool_arguments(func, kwargs):
+    """
+    Pre-processes arguments by converting types based on function signature or heuristics.
+    """
+    try:
+        sig = inspect.signature(func)
+    except ValueError:
+        return kwargs
+
+    new_kwargs = kwargs.copy()
+    
+    for param_name, value in new_kwargs.items():
+        if param_name in sig.parameters:
+            param = sig.parameters[param_name]
+            annotation = param.annotation
+            
+            # Only attempt conversion if the value is a string
+            if isinstance(value, str):
+                converted = False
+                
+                # 1. Try explicit type hints
+                if annotation != inspect.Parameter.empty:
+                    try:
+                        # Handle basic types and typing.List/Dict
+                        is_list_or_dict = (annotation == list or annotation == dict)
+                        # Check for generic types like List[int]
+                        if not is_list_or_dict and hasattr(annotation, '__origin__'):
+                            is_list_or_dict = annotation.__origin__ in (list, dict)
+                        
+                        if is_list_or_dict:
+                            new_kwargs[param_name] = json.loads(value)
+                            converted = True
+                        elif annotation == int:
+                            new_kwargs[param_name] = int(value)
+                            converted = True
+                        elif annotation == float:
+                            new_kwargs[param_name] = float(value)
+                            converted = True
+                        elif annotation == bool:
+                            if value.lower() == 'true': 
+                                new_kwargs[param_name] = True
+                                converted = True
+                            elif value.lower() == 'false': 
+                                new_kwargs[param_name] = False
+                                converted = True
+                    except:
+                        pass
+                
+                # 2. Heuristic fallback if no type hint or conversion didn't happen
+                if not converted and annotation == inspect.Parameter.empty:
+                    val_str = value.strip()
+                    # Try JSON (List/Dict)
+                    if (val_str.startswith('[') and val_str.endswith(']')) or \
+                       (val_str.startswith('{') and val_str.endswith('}')):
+                        try:
+                            new_kwargs[param_name] = json.loads(val_str)
+                            continue
+                        except:
+                            pass
+                    
+                    # Try Int
+                    if val_str.lstrip('-').isdigit():
+                        try:
+                            new_kwargs[param_name] = int(val_str)
+                            continue
+                        except:
+                            pass
+                            
+                    # Try Bool
+                    if val_str.lower() == 'true':
+                        new_kwargs[param_name] = True
+                        continue
+                    elif val_str.lower() == 'false':
+                        new_kwargs[param_name] = False
+                        continue
+                        
+    return new_kwargs
+
 def execute_tool(_tool_name, **kwargs):
     """Executes a registered tool."""
     tool = P10Config.TOOLS.get_tool(_tool_name)
     if tool and tool.is_visible:
         try:
-            return tool.run(**kwargs)
+            # Pre-process arguments
+            converted_kwargs = _convert_tool_arguments(tool.func, kwargs)
+            return tool.run(**converted_kwargs)
         except Exception as e:
             return f"Error executing tool {_tool_name}: {str(e)}"
     return f"Tool {_tool_name} not found or disabled."

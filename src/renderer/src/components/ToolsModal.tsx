@@ -41,6 +41,7 @@ const ToolsModal: React.FC<ToolsModalProps> = ({ onClose }) => {
     metadata: {}
   });
   const [newToolMetadata, setNewToolMetadata] = useState('{}');
+  const [createError, setCreateError] = useState<string | null>(null);
 
   const fetchTools = async () => {
     setLoading(true);
@@ -248,25 +249,53 @@ const ToolsModal: React.FC<ToolsModalProps> = ({ onClose }) => {
   };
 
   const handleCreateTool = async () => {
-    if (!newTool.name || !newTool.description || !newTool.code) {
-      alert("Name, Description and Code are required.");
+    setCreateError(null);
+    // Parse name and description from code
+    const nameMatch = newTool.code?.match(/def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/);
+    const descriptionMatch = newTool.code?.match(/"""([\s\S]*?)"""/) || newTool.code?.match(/'''([\s\S]*?)'''/);
+
+    const extractedName = nameMatch ? nameMatch[1] : '';
+    const extractedDescription = descriptionMatch ? descriptionMatch[1].trim() : '';
+
+    if (!newTool.code) {
+      setCreateError("Code is required.");
       return;
+    }
+
+    if (!extractedName) {
+        setCreateError("Could not find function name in code. Please define a function using 'def name(...):'");
+        return;
+    }
+
+    if (!extractedDescription) {
+        setCreateError("Could not find description in code. Please add a docstring using \"\"\"...\"\"\"");
+        return;
+    }
+
+    if (extractedName === 'new_tool') {
+        setCreateError("Please change the function name from 'new_tool' to something unique.");
+        return;
+    }
+
+    if (extractedDescription === 'Description') {
+        setCreateError("Please change the description from default 'Description' to something meaningful.");
+        return;
     }
 
     let parsedMetadata = {};
     try {
         parsedMetadata = JSON.parse(newToolMetadata);
     } catch (e) {
-        alert("Invalid Metadata JSON");
+        setCreateError("Invalid Metadata JSON");
         return;
     }
     
     try {
       // @ts-ignore
       const result = await window.api.saveTool(
-        newTool.name,
+        extractedName,
         newTool.code,
-        newTool.description,
+        extractedDescription,
         newTool.permission_level,
         newTool.tool_type,
         newTool.is_gen,
@@ -274,7 +303,7 @@ const ToolsModal: React.FC<ToolsModalProps> = ({ onClose }) => {
       );
 
       if (result && result.message && result.message.startsWith("Error")) {
-        alert(result.message);
+        setCreateError(result.message);
         return;
       }
       
@@ -289,10 +318,11 @@ const ToolsModal: React.FC<ToolsModalProps> = ({ onClose }) => {
         metadata: {}
       });
       setNewToolMetadata('{}');
+      setCreateError(null);
       fetchTools();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to create tool:", err);
-      alert("Failed to create tool: " + err);
+      setCreateError("Failed to create tool: " + err.message || err);
     }
   };
 
@@ -530,26 +560,16 @@ const ToolsModal: React.FC<ToolsModalProps> = ({ onClose }) => {
              <div className="flex-1 overflow-auto p-6">
                 <div className="mb-4">
                   <label className="block text-sm text-gray-400 mb-1">
-                    Name <span className="text-red-500">*</span>
-                  </label>
-                  <input 
-                    type="text" 
-                    className="w-full bg-[#252526] border border-[#3e3e3e] rounded p-2 text-white focus:border-[#4ec9b0] focus:outline-none text-sm"
-                    value={newTool.name}
-                    onChange={e => setNewTool({...newTool, name: e.target.value})}
-                    placeholder="e.g. my_new_tool"
-                  />
-                </div>
-                
-                <div className="mb-4">
-                  <label className="block text-sm text-gray-400 mb-1">
-                    Description <span className="text-red-500">*</span>
+                    Code <span className="text-red-500">*</span>
                   </label>
                   <textarea 
-                    className="w-full bg-[#252526] border border-[#3e3e3e] rounded p-2 text-white focus:border-[#4ec9b0] focus:outline-none h-20 text-sm resize-none"
-                    value={newTool.description}
-                    onChange={e => setNewTool({...newTool, description: e.target.value})}
-                    placeholder="Describe what this tool does..."
+                    className="w-full bg-[#252526] border border-[#3e3e3e] rounded p-2 text-white focus:border-[#4ec9b0] focus:outline-none h-60 font-mono text-xs"
+                    value={newTool.code}
+                    onChange={e => {
+                        setNewTool({...newTool, code: e.target.value});
+                        if (createError) setCreateError(null);
+                    }}
+                    spellCheck={false}
                   />
                 </div>
 
@@ -599,18 +619,6 @@ const ToolsModal: React.FC<ToolsModalProps> = ({ onClose }) => {
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-sm text-gray-400 mb-1">
-                    Code <span className="text-red-500">*</span>
-                  </label>
-                  <textarea 
-                    className="w-full bg-[#252526] border border-[#3e3e3e] rounded p-2 text-white focus:border-[#4ec9b0] focus:outline-none h-60 font-mono text-xs"
-                    value={newTool.code}
-                    onChange={e => setNewTool({...newTool, code: e.target.value})}
-                    spellCheck={false}
-                  />
-                </div>
-
-                <div className="mb-4">
                   <label className="block text-sm text-gray-400 mb-1">Metadata (JSON)</label>
                   <textarea 
                     className="w-full bg-[#252526] border border-[#3e3e3e] rounded p-2 text-white focus:border-[#4ec9b0] focus:outline-none h-20 font-mono text-xs"
@@ -622,7 +630,10 @@ const ToolsModal: React.FC<ToolsModalProps> = ({ onClose }) => {
                 </div>
              </div>
 
-             <div className="flex justify-end gap-3 p-4 border-t border-[#333] bg-[#1e1e1e]">
+             <div className="flex justify-end gap-3 p-4 border-t border-[#333] bg-[#1e1e1e] items-center">
+                {createError && (
+                    <span className="text-red-500 text-xs mr-auto">{createError}</span>
+                )}
                 <button 
                     onClick={() => setIsCreating(false)}
                     className="px-4 py-2 rounded bg-[#2b2b2b] hover:bg-[#333] text-white transition-colors text-sm"

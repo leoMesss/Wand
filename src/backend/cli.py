@@ -4,7 +4,7 @@ import os
 from api_client import fetch_available_models
 from llm_processor import LLMProcessor
 from tools import get_tools_definitions
-from ShareMemory.P10_config import P10Config
+from configs.P10_config import P10Config
 
 # Try to load temporary tools so they are registered in P10Config.TOOLS
 try:

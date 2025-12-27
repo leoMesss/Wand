@@ -4,7 +4,7 @@ import sys
 import re
 from api_client import chat_completion_stream
 from tools import get_tools_definitions, execute_tool, set_llm_config
-from ShareMemory.P10_config import P10Config
+from configs.P10_config import P10Config
 
 # Ensure stdout/stderr use UTF-8 to prevent encoding errors on Windows
 if sys.platform == 'win32':
