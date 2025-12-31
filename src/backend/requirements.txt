@@ -1,7 +1,9 @@
 flask
 flask-cors
 openai
-pypdf
+pypdf>=3.17.0           # PDF 基础处理
+pdfplumber>=0.10.0      # PDF 文本和表格提取（更强大）
+PyMuPDF>=1.23.0          # PDF 高级处理（渲染、编辑、提取等）
 
 # 数值计算包
 numpy>=1.24.0
