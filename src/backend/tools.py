@@ -35,8 +35,8 @@ class Tool:
         self.func = func
         self.permission_level = permission_level
         self.is_visible = True
-        self.is_gen = kwargs.get('is_gen', False)
-        self.tool_type = kwargs.get('tool_type', 'general')
+        self.is_gen = kwargs.pop('is_gen', False)
+        self.tool_type = kwargs.pop('tool_type', 'general')
         self.code = code
         self.metadata = kwargs
 
@@ -78,7 +78,7 @@ P10Config.TOOLS = ToolRegistry()
 
 LLM_CONFIG = {}
 TOOLS_TMP_FILE = os.path.join(os.path.dirname(__file__), 'tools_tmp.py')
-TOOLS_CONFIG_FILE = os.path.join(os.path.dirname(__file__), 'tools_config.json')
+TOOLS_CONFIG_FILE = os.path.join(os.path.dirname(__file__), 'configs', 'tools_config.json')
 
 def load_tool_config():
     """Loads tool configuration (visibility) from disk."""
@@ -130,7 +130,7 @@ def save_tool(name: str, code: str, description: str, permission_level: int = 9,
         is_gen: Whether the tool is generated (default True).
         metadata: Additional metadata (default None).
     """
-    json_path = os.path.join(os.path.dirname(__file__), 'tools.json')
+    json_path = os.path.join(os.path.dirname(__file__), 'configs', 'tools.json')
     
     if metadata is None:
         metadata = {}
@@ -184,7 +184,7 @@ def delete_tool(name: str):
     """
     Permanently deletes a tool from tools.json and the registry.
     """
-    json_path = os.path.join(os.path.dirname(__file__), 'tools.json')
+    json_path = os.path.join(os.path.dirname(__file__), 'configs', 'tools.json')
     
     # 1. Remove from tools.json
     try:
@@ -450,7 +450,7 @@ def _register_tool_memory(name: str, code: str, description: str):
 
 def load_tools_from_json():
     """Loads tools from tools.json and registers them."""
-    json_path = os.path.join(os.path.dirname(__file__), 'tools.json')
+    json_path = os.path.join(os.path.dirname(__file__), 'configs', 'tools.json')
     if not os.path.exists(json_path):
         sys.stderr.write(f"Warning: {json_path} not found.\n")
         return

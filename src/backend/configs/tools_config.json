@@ -8,6 +8,7 @@
     "edit_file": true,
     "get_workspace_content_index": true,
     "check_available_tools": true,
-    "get_tools_status": true
+    "get_tools_status": true,
+    "calculate_sum_of_three": true
   }
 }

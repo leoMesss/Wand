@@ -27,6 +27,7 @@ const ToolsModal: React.FC<ToolsModalProps> = ({ onClose }) => {
   const [editingProps, setEditingProps] = useState<{ [key: string]: Partial<ToolDefinition> }>({});
   const [dirtyTools, setDirtyTools] = useState<Set<string>>(new Set());
   const [confirmingSave, setConfirmingSave] = useState<ToolDefinition | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState<ToolDefinition | null>(null);
   const [revertOnCancel, setRevertOnCancel] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -131,17 +132,19 @@ const ToolsModal: React.FC<ToolsModalProps> = ({ onClose }) => {
     setDirtyTools(prev => new Set(prev).add(name));
   };
 
-  const handleSaveTool = (tool: ToolDefinition, shouldRevertOnCancel: boolean = false) => {
+  const handleSaveTool = (tool: ToolDefinition) => {
     setConfirmingSave(tool);
-    setRevertOnCancel(shouldRevertOnCancel);
   };
 
-  const handleCancelSave = () => {
-    if (confirmingSave && revertOnCancel) {
+  const handleDiscardChanges = () => {
+    if (confirmingSave) {
         handleCancelEdit(confirmingSave.name);
     }
     setConfirmingSave(null);
-    setRevertOnCancel(false);
+  };
+
+  const handleContinueEditing = () => {
+    setConfirmingSave(null);
   };
 
   const executeSaveTool = async () => {
@@ -152,7 +155,6 @@ const ToolsModal: React.FC<ToolsModalProps> = ({ onClose }) => {
     const propsToSave = editingProps[tool.name] || {};
     
     // Merge current tool props with edits
-    const description = propsToSave.description !== undefined ? propsToSave.description : tool.description;
     const permission_level = propsToSave.permission_level !== undefined ? propsToSave.permission_level : (tool.permission_level || 0);
     const tool_type = propsToSave.tool_type !== undefined ? propsToSave.tool_type : (tool.tool_type || "");
     const is_gen = propsToSave.is_gen !== undefined ? propsToSave.is_gen : (tool.is_gen !== undefined ? tool.is_gen : true);
@@ -174,9 +176,21 @@ const ToolsModal: React.FC<ToolsModalProps> = ({ onClose }) => {
         return;
     }
 
+    // Extract description from code
+    let extractedDescription = '';
+    if (codeToSave) {
+        const descriptionMatch = codeToSave.match(/"""([\s\S]*?)"""/) || codeToSave.match(/'''([\s\S]*?)'''/);
+        extractedDescription = descriptionMatch ? descriptionMatch[1].trim() : '';
+        
+        if (!extractedDescription) {
+            setValidationError(`Code must contain a description (docstring). Please add a docstring using \"\"\"...\"\"\"`);
+            return;
+        }
+    }
+
     try {
       // @ts-ignore
-      await window.api.saveTool(tool.name, codeToSave, description, permission_level, tool_type, is_gen, metadata);
+      await window.api.saveTool(tool.name, codeToSave, extractedDescription, permission_level, tool_type, is_gen, metadata);
       
       // Clear dirty state
       const newDirty = new Set(dirtyTools);
@@ -456,17 +470,6 @@ const ToolsModal: React.FC<ToolsModalProps> = ({ onClose }) => {
                   {expandedTools.has(tool.name) && (
                     <div className="p-4 border-t border-[#333] bg-[#1e1e1e]">
                       
-                      {/* Description Field */}
-                      <div className="mb-3">
-                        <label className="block text-xs text-gray-500 mb-1">Description</label>
-                        <textarea 
-                          className="w-full h-[60px] bg-[#252526] text-gray-300 p-2 border border-[#3e3e3e] rounded focus:border-[#4ec9b0] focus:outline-none resize-y text-xs"
-                          value={editingProps[tool.name]?.description !== undefined ? editingProps[tool.name].description : tool.description}
-                          onChange={(e) => handlePropChange(tool.name, 'description', e.target.value)}
-                          onBlur={() => { if (dirtyTools.has(tool.name)) handleSaveTool(tool, true); }}
-                        />
-                      </div>
-
                       <div className="grid grid-cols-2 gap-4 mb-3">
                         {/* Permission Level */}
                         <div>
@@ -476,7 +479,7 @@ const ToolsModal: React.FC<ToolsModalProps> = ({ onClose }) => {
                             value={editingProps[tool.name]?.permission_level !== undefined ? editingProps[tool.name].permission_level : (tool.permission_level || 0)}
                             onChange={(e) => {
                                 handlePropChange(tool.name, 'permission_level', parseInt(e.target.value) || 0);
-                                handleSaveTool(tool, true);
+                                handleSaveTool(tool);
                             }}
                           >
                             {[5, 6, 7, 8, 9, 10].map(level => (
@@ -493,7 +496,7 @@ const ToolsModal: React.FC<ToolsModalProps> = ({ onClose }) => {
                             className="w-full bg-[#252526] text-gray-300 p-2 border border-[#3e3e3e] rounded focus:border-[#4ec9b0] focus:outline-none text-xs"
                             value={editingProps[tool.name]?.tool_type !== undefined ? editingProps[tool.name].tool_type : (tool.tool_type || "")}
                             onChange={(e) => handlePropChange(tool.name, 'tool_type', e.target.value)}
-                            onBlur={() => { if (dirtyTools.has(tool.name)) handleSaveTool(tool, true); }}
+                            onBlur={() => { if (dirtyTools.has(tool.name)) handleSaveTool(tool); }}
                           />
                         </div>
                       </div>
@@ -507,7 +510,7 @@ const ToolsModal: React.FC<ToolsModalProps> = ({ onClose }) => {
                             value={editingProps[tool.name]?.is_gen !== undefined ? (editingProps[tool.name].is_gen ? "true" : "false") : (tool.is_gen ? "true" : "false")}
                             onChange={(e) => {
                                 handlePropChange(tool.name, 'is_gen', e.target.value === "true");
-                                handleSaveTool(tool, true);
+                                handleSaveTool(tool);
                             }}
                           >
                              <option value="true">True</option>
@@ -523,7 +526,7 @@ const ToolsModal: React.FC<ToolsModalProps> = ({ onClose }) => {
                           className="w-full h-[60px] bg-[#252526] text-gray-300 p-2 border border-[#3e3e3e] rounded focus:border-[#4ec9b0] focus:outline-none resize-y text-xs font-mono"
                           value={editingProps[tool.name]?.metadata !== undefined ? editingProps[tool.name].metadata : JSON.stringify(tool.metadata || {}, null, 2)}
                           onChange={(e) => handlePropChange(tool.name, 'metadata', e.target.value)}
-                          onBlur={() => { if (dirtyTools.has(tool.name)) handleSaveTool(tool, true); }}
+                          onBlur={() => { if (dirtyTools.has(tool.name)) handleSaveTool(tool); }}
                         />
                       </div>
 
@@ -536,7 +539,7 @@ const ToolsModal: React.FC<ToolsModalProps> = ({ onClose }) => {
                           className="w-full h-[200px] bg-[#1e1e1e] text-gray-300 p-2 border border-[#3e3e3e] rounded focus:border-[#4ec9b0] focus:outline-none resize-y font-mono text-xs"
                           value={editingCode[tool.name] !== undefined ? editingCode[tool.name] : (tool.code || "No source code available")}
                           onChange={(e) => handleCodeChange(tool.name, e.target.value)}
-                          onBlur={() => { if (dirtyTools.has(tool.name)) handleSaveTool(tool, true); }}
+                          onBlur={() => { if (dirtyTools.has(tool.name)) handleSaveTool(tool); }}
                           spellCheck={false}
                         />
                       </div>
@@ -652,7 +655,7 @@ const ToolsModal: React.FC<ToolsModalProps> = ({ onClose }) => {
       </div>
 
       {/* Confirmation Modal */}
-      {confirmingSave && (
+      {confirmingSave && !validationError && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60]">
           <div className="bg-[#252526] w-[400px] rounded-lg shadow-2xl border border-[#333] p-0 overflow-hidden">
             <div className="p-4 flex items-start gap-3">
@@ -674,10 +677,41 @@ const ToolsModal: React.FC<ToolsModalProps> = ({ onClose }) => {
                 保存
               </button>
               <button 
-                onClick={handleCancelSave}
+                onClick={handleDiscardChanges}
+                className="px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded"
+              >
+                放弃修改
+              </button>
+              <button 
+                onClick={handleContinueEditing}
                 className="px-4 py-1.5 bg-[#3e3e3e] hover:bg-[#4e4e4e] text-white text-sm rounded"
               >
                 取消
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Validation Error Modal */}
+      {validationError && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[70]">
+          <div className="bg-[#252526] w-[500px] rounded-lg shadow-2xl border border-[#333] p-0 overflow-hidden">
+             <div className="p-4">
+                <h3 className="text-red-500 font-medium mb-2">Validation Error</h3>
+                <pre className="text-gray-300 text-xs whitespace-pre-wrap font-mono bg-[#1e1e1e] p-2 rounded border border-[#3e3e3e] max-h-[300px] overflow-auto">
+                    {validationError}
+                </pre>
+             </div>
+             <div className="flex justify-end gap-2 p-3 bg-[#1e1e1e] border-t border-[#333]">
+              <button 
+                onClick={() => {
+                    setValidationError(null);
+                    setConfirmingSave(null); 
+                }}
+                className="px-4 py-1.5 bg-[#3e3e3e] hover:bg-[#4e4e4e] text-white text-sm rounded"
+              >
+                OK
               </button>
             </div>
           </div>
