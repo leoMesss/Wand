@@ -203,6 +203,20 @@ def delete_tool(name: str):
     # 2. Remove from registry
     if name in P10Config.TOOLS._registry:
         del P10Config.TOOLS._registry[name]
+
+    # 3. Remove from tools_config.json (visibility settings)
+    try:
+        if os.path.exists(TOOLS_CONFIG_FILE):
+            with open(TOOLS_CONFIG_FILE, 'r', encoding='utf-8') as f:
+                config_data = json.load(f)
+            
+            if 'visibility' in config_data and name in config_data['visibility']:
+                del config_data['visibility'][name]
+                
+                with open(TOOLS_CONFIG_FILE, 'w', encoding='utf-8') as f:
+                    json.dump(config_data, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        sys.stderr.write(f"Warning: Error deleting tool from config: {e}\n")
         
     return f"Tool '{name}' has been deleted."
 
